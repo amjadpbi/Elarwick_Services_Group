@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "NB_01_Ingest_Bronze"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "4035a151-55e9-9390-4ff6-a2c4bbe940fc"
+  }
+}

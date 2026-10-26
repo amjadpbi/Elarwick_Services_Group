@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Lakehouse",
+    "displayName": "LH_Elarwick_Reconciliation"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "d7d9e935-de7b-b8d6-4a48-2f431836fa4b"
+  }
+}
