@@ -421,6 +421,114 @@ print(f"Valid journal lines published: {silver_gl.count()}")
 # META   "language_group": "synapse_pyspark"
 # META }
 
+# CELL ********************
+
+
+# Validate and publish Chart of Accounts
+
+coa = (
+    coa_raw
+    .withColumn(
+        "IsActive",
+        F.expr("try_cast(IsActive AS BOOLEAN)")
+    )
+)
+
+coa_invalid = (
+    F.col("AccountID").isNull()
+    | (F.trim(F.col("AccountID")) == "")
+    | F.col("AccountCode").isNull()
+    | (F.trim(F.col("AccountCode")) == "")
+    | F.col("AccountName").isNull()
+    | (F.trim(F.col("AccountName")) == "")
+    | F.col("AccountType").isNull()
+    | (F.trim(F.col("AccountType")) == "")
+    | F.col("IsActive").isNull()
+)
+
+coa_source_count = coa.count()
+
+coa_invalid_count = quarantine_records(
+    coa,
+    "ChartOfAccounts",
+    "AccountID",
+    coa_invalid,
+    "INVALID_CHART_OF_ACCOUNT",
+    "Missing required account field or invalid IsActive value."
+)
+
+coa_valid_count = coa_source_count - coa_invalid_count
+
+print(f"Chart of Accounts source rows: {coa_source_count}")
+print(f"Invalid Chart of Accounts rows: {coa_invalid_count}")
+print(f"Valid Chart of Accounts rows: {coa_valid_count}")
+
+if coa_source_count != 10 or coa_invalid_count != 0:
+    raise ValueError(
+        "Chart of Accounts validation failed. "
+        "Expected 10 source rows and 0 invalid rows. "
+        "Dim_ChartOfAccounts was not overwritten."
+    )
+
+silver_coa = (
+    coa
+    .filter(~coa_invalid)
+    .select(
+        "AccountID",
+        "AccountCode",
+        "AccountName",
+        "AccountType",
+        "IsActive",
+        "BatchID",
+        "SourceFileName",
+        "SourceFileHash",
+        "IngestedAt",
+        "SourceRowHash"
+    )
+)
+
+record_quality(
+    "ChartOfAccounts",
+    "Required account fields and active status",
+    coa_source_count,
+    coa_valid_count,
+    coa_invalid_count
+)
+
+# Publish the validated dimension.
+(
+    silver_coa.write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .saveAsTable("Dim_ChartOfAccounts")
+)
+
+# Verify the persisted result.
+persisted_coa = spark.table("Dim_ChartOfAccounts")
+persisted_coa_count = persisted_coa.count()
+
+if persisted_coa_count != 10:
+    raise ValueError(
+        f"Expected 10 persisted Chart of Accounts rows, "
+        f"found {persisted_coa_count}."
+    )
+
+print(
+    f"SUCCESS: Dim_ChartOfAccounts contains "
+    f"{persisted_coa_count} rows."
+)
+
+display(persisted_coa.orderBy("AccountCode"))
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
 # MARKDOWN ********************
 
 # ## 5. Validate Chart of Accounts and Account Mapping
