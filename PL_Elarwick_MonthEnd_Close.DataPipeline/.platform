@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "PL_Elarwick_MonthEnd_Close"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "93abe0e3-9b94-95bd-4f47-e1ca56d419c8"
+  }
+}

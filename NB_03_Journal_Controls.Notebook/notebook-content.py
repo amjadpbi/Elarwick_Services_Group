@@ -715,53 +715,83 @@ reconciliation_results = (
 # 7. PERSIST RESULTS AND EXCEPTIONS
 # ============================================================
 
+# Convert array columns to strings for Warehouse compatibility.
+reconciliation_results = (
+    reconciliation_results
+    .withColumn(
+        "BankTransactionIDs",
+        F.array_join(F.col("BankTransactionIDs"), ",")
+    )
+    .withColumn(
+        "JournalEntryIDs",
+        F.array_join(F.col("JournalEntryIDs"), ",")
+    )
+)
+
+# Persist the original reconciliation results table.
 (
     reconciliation_results
     .write
     .format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable("Gold_ReconciliationResults")
+    .saveAsTable("gold_reconciliationresults")
 )
 
-reconciliation_exceptions = reconciliation_results.filter(
-    ~F.col("ReconciliationStatus").isin(
-        "CONFIRMED_MATCH", "CONFIRMED_GROUP_MATCH"
+# Build exceptions from reconciliation results.
+reconciliation_exceptions = (
+    reconciliation_results
+    .filter(
+        F.col("ReconciliationStatus").isin(
+            "LEDGER_ONLY",
+            "BANK_ONLY",
+            "POSSIBLE_DUPLICATE",
+            "AMOUNT_DISCREPANCY",
+            "DATE_MISMATCH",
+            "POTENTIAL_MATCH"
+        )
     )
 )
 
+# Persist the original reconciliation exceptions table.
 (
     reconciliation_exceptions
     .write
     .format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable("Gold_ReconciliationExceptions")
+    .saveAsTable("gold_reconciliationexceptions")
 )
 
+# Build reconciliation summary.
 reconciliation_summary = (
     reconciliation_results
     .groupBy("ReconciliationStatus")
     .agg(
         F.count("*").alias("ReferenceGroupCount"),
-        F.sum(F.coalesce(F.col("BankTransactionCount"), F.lit(0))).alias(
-            "BankTransactionCount"
-        ),
-        F.sum(F.coalesce(F.col("GLEntryCount"), F.lit(0))).alias(
-            "GLEntryCount"
-        )
+        F.sum(
+            F.coalesce(F.col("BankTransactionCount"), F.lit(0))
+        ).alias("BankTransactionCount"),
+        F.sum(
+            F.coalesce(F.col("GLEntryCount"), F.lit(0))
+        ).alias("GLEntryCount")
     )
     .withColumn("ProcessedAt", F.current_timestamp())
 )
 
+# Persist reconciliation summary.
 (
     reconciliation_summary
     .write
     .format("delta")
     .mode("overwrite")
     .option("overwriteSchema", "true")
-    .saveAsTable("Gold_ReconciliationSummary")
+    .saveAsTable("gold_reconciliationsummary")
 )
+
+# ============================================================
+# 8. DISPLAY RESULTS
+# ============================================================
 
 print("Reconciliation engine execution completed.")
 print("Gold_ReconciliationResults rows:", reconciliation_results.count())
@@ -771,10 +801,18 @@ print("Reconciliation status summary:")
 display(reconciliation_summary.orderBy("ReconciliationStatus"))
 
 print("Reconciliation results:")
-display(reconciliation_results.orderBy("ReconciliationStatus", "NormalizedReference"))
+display(
+    reconciliation_results.orderBy(
+        "ReconciliationStatus", "NormalizedReference"
+    )
+)
 
 print("Exceptions requiring review:")
-display(reconciliation_exceptions.orderBy("ReconciliationStatus", "NormalizedReference"))
+display(
+    reconciliation_exceptions.orderBy(
+        "ReconciliationStatus", "NormalizedReference"
+    )
+)
 
 # METADATA ********************
 

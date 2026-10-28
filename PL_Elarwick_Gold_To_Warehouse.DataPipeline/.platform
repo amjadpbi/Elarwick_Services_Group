@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "DataPipeline",
+    "displayName": "PL_Elarwick_Gold_To_Warehouse"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "13360d8a-9256-a7d9-48e3-c334e98584ef"
+  }
+}

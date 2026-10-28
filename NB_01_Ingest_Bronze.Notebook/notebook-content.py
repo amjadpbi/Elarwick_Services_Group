@@ -611,15 +611,3 @@ print("BRONZE VALIDATION PASSED: all four tables meet acceptance checks.")
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
-
-# CELL ********************
-
-df = spark.sql("SELECT * FROM LH_Elarwick_Reconciliation.dbo.dim_chartofaccounts LIMIT 1000")
-display(df)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }

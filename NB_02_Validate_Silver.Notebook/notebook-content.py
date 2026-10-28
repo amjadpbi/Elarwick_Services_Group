@@ -774,15 +774,3 @@ print("Notebook 2 processing completed.")
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }
-
-# CELL ********************
-
-# MAGIC %%sql
-# MAGIC DESCRIBE TABLE LH_Elarwick_Reconciliation.dbo.Dim_ChartOfAccounts;
-
-# METADATA ********************
-
-# META {
-# META   "language": "sparksql",
-# META   "language_group": "synapse_pyspark"
-# META }
